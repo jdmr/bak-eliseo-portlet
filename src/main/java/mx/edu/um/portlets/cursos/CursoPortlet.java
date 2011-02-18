@@ -3,13 +3,17 @@ package mx.edu.um.portlets.cursos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.servlet.ImageServletTokenUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.KeyValuePair;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.GroupConstants;
 import com.liferay.portal.model.Layout;
@@ -24,6 +28,17 @@ import com.liferay.portlet.asset.model.AssetEntry;
 import com.liferay.portlet.asset.service.AssetEntryServiceUtil;
 import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
 import com.liferay.portlet.asset.service.persistence.AssetEntryQuery;
+import com.liferay.portlet.documentlibrary.model.DLFileEntry;
+import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
+import com.liferay.portlet.imagegallery.model.IGImage;
+import com.liferay.portlet.imagegallery.service.IGImageLocalServiceUtil;
+import com.liferay.portlet.journal.model.JournalArticle;
+import com.liferay.portlet.journal.model.JournalArticleDisplay;
+import com.liferay.portlet.journal.model.JournalArticleResource;
+import com.liferay.portlet.journal.service.JournalArticleResourceLocalServiceUtil;
+import com.liferay.portlet.journalcontent.util.JournalContentUtil;
+import com.liferay.portlet.messageboards.service.MBMessageLocalServiceUtil;
+import com.liferay.util.portlet.PortletRequestUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -258,13 +273,7 @@ public class CursoPortlet {
             preferences = PortletPreferencesFactoryUtil.getPortletSetup(request, portletResource);
         }
 
-        //boolean defaultScope = GetterUtil.getBoolean(preferences.getValue("default-scope", null), true);
-
         long scopeGroupId = themeDisplay.getScopeGroupId();
-        //Layout layout = themeDisplay.getLayout();
-
-        // Metodo copiado del AssetPublisherUtil
-        //long[] groupIds = getGroupIds(preferences, scopeGroupId, layout);
 
         long[] availableClassNameIds = AssetRendererFactoryRegistryUtil.getClassNameIds();
 
@@ -276,15 +285,12 @@ public class CursoPortlet {
         try {
             AssetEntryQuery assetEntryQuery = new AssetEntryQuery();
             
-            //String[] allAssetTagNames = new String[0];
             String[] allAssetTagNames = new String[] {curso.getCodigo().toLowerCase()};
             assetEntryQuery = getAssetEntryQuery(preferences, scopeGroupId);
 
             long[] assetTagIds = AssetTagLocalServiceUtil.getTagIds(scopeGroupId, allAssetTagNames);
 
             assetEntryQuery.setAllTagIds(assetTagIds);
-            //allAssetTagNames = getAssetTagNames(preferences, scopeGroupId);
-            //long assetVocabularyId = GetterUtil.getLong(preferences.getValue("asset-vocabulary-id", StringPool.BLANK));
 
             List disponibles = new ArrayList();
             List seleccionados = new ArrayList();
@@ -293,12 +299,6 @@ public class CursoPortlet {
                 long[] groupClassNameIds = {classNameId};
 
                 assetEntryQuery.setClassNameIds(groupClassNameIds);
-
-                //String groupClassName = PortalUtil.getClassName(classNameId);
-
-                //AssetRendererFactory groupAssetRendererFactory = AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(groupClassName);
-
-                //int groupTotal = AssetEntryServiceUtil.getEntriesCount(assetEntryQuery);
 
                 List<AssetEntry> results = AssetEntryServiceUtil.getEntries(assetEntryQuery);
 
@@ -342,129 +342,57 @@ public class CursoPortlet {
         response.setRenderParameter("cursoId", id.toString());
     }
 
-//    @RequestMapping(params = "action=verContenido")
-//    public String verContenido(RenderRequest request, RenderResponse response, @RequestParam("cursoId") Long cursoId, @RequestParam("contenidoId") Long contenidoId, Model model) {
-//        log.debug("Ver contenido");
-//        curso = cursoDao.obtiene(cursoId);
-//        model.addAttribute("curso", curso);
-//        model.addAttribute("contenidoId", contenidoId);
-//        ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
-//        try {
-//            TagsAsset contenido = TagsAssetLocalServiceUtil.getAsset(new Long(contenidoId));
-//            log.debug("Contenido: " + contenido);
-//            if (contenido.getClassName().equals(JournalArticle.class.getName())) {
-//                JournalArticleResource articleResource = JournalArticleResourceLocalServiceUtil.getArticleResource(contenido.getClassPK());
-//                String templateId = (String) request.getAttribute("JOURNAL_TEMPLATE_ID");
-//                String languageId = LanguageUtil.getLanguageId(request);
-//                int articlePage = ParamUtil.getInteger(request, "page", 1);
-//                String xmlRequest = PortletRequestUtil.toXML(request, response);
-//                model.addAttribute("currentURL", themeDisplay.getURLCurrent());
-//
-//                JournalArticleDisplay articleDisplay = JournalContentUtil.getDisplay(articleResource.getGroupId(), articleResource.getArticleId(), templateId, null, languageId, themeDisplay, articlePage, xmlRequest);
-//
-//                if (articleDisplay != null) {
-//                    TagsAssetLocalServiceUtil.incrementViewCounter(contenido.getClassName(), articleDisplay.getResourcePrimKey());
-//                    model.addAttribute("articleDisplay", articleDisplay);
-//
-//                    String[] availableLocales = articleDisplay.getAvailableLocales();
-//                    if (availableLocales.length > 0) {
-//                        model.addAttribute("availableLocales", availableLocales);
-//                    }
-//                    int discussionMessagesCount = MBMessageLocalServiceUtil.getDiscussionMessagesCount(PortalUtil.getClassNameId(JournalArticle.class.getName()), articleDisplay.getResourcePrimKey());
-//                    if (discussionMessagesCount > 0) {
-//                        model.addAttribute("discussionMessages", true);
-//                    }
-//                }
-//            } else if (contenido.getClassName().equals(IGImage.class.getName())) {
-//                IGImage image = IGImageLocalServiceUtil.getImage(contenido.getClassPK());
-//                TagsAssetLocalServiceUtil.incrementViewCounter(contenido.getClassName(), image.getImageId());
-//                model.addAttribute("contenido", contenido);
-//                model.addAttribute("image", image);
-//                model.addAttribute("imageURL", themeDisplay.getPathImage() + "/image_gallery?img_id=" + image.getLargeImageId() + "&t=" + ImageServletTokenUtil.getToken(image.getLargeImageId()));
-//            } else if (contenido.getClassName().equals(DLFileEntry.class.getName())) {
-//                DLFileEntry fileEntry = DLFileEntryLocalServiceUtil.getFileEntry(contenido.getClassPK());
-//
-//                model.addAttribute("document", fileEntry);
-//                model.addAttribute("documentURL", themeDisplay.getPathMain() + "/document_library/get_file?p_l_id=" + themeDisplay.getPlid() + "&folderId=" + fileEntry.getFolderId() + "&name=" + HttpUtil.encodeURL(fileEntry.getName()));
-//            }
-//        } catch (Exception e) {
-//            log.error("Error al traer el contenido", e);
-//        }
-//
-//        return "curso/verContenido";
-//    }
-//
-//    @RequestMapping(params = "action=discusion")
-//    public void discusion(ActionRequest request, ActionResponse response,
-//            @ModelAttribute("curso") Curso curso, BindingResult result,
-//            Model model, SessionStatus sessionStatus, @RequestParam("cursoId") Long id, @RequestParam("contenidoId") Long contenidoId) {
-//        log.debug("Ver discusion");
-//        log.debug("CursoId: " + id);
-//
-//        try {
-//            String cmd = ParamUtil.getString(request, Constants.CMD);
-//            if (cmd.equals(Constants.ADD) || cmd.equals(Constants.UPDATE)) {
-//                MBMessage message = updateMessage(request);
-//            } else if (cmd.equals(Constants.DELETE)) {
-//                deleteMessage(request);
-//            }
-//        } catch (Exception e) {
-//            log.error("Error al intentar actualizar el mensaje", e);
-//        }
-//
-//        response.setRenderParameter("action", "verContenido");
-//        response.setRenderParameter("cursoId", id.toString());
-//        response.setRenderParameter("contenidoId", contenidoId.toString());
-//    }
-//
-//    protected void deleteMessage(ActionRequest actionRequest) throws Exception {
-//        long groupId = PortalUtil.getScopeGroupId(actionRequest);
-//
-//        String className = ParamUtil.getString(actionRequest, "className");
-//        long classPK = ParamUtil.getLong(actionRequest, "classPK");
-//
-//        long messageId = ParamUtil.getLong(actionRequest, "messageId");
-//
-//        MBMessageServiceUtil.deleteDiscussionMessage(
-//                groupId, className, classPK, messageId);
-//    }
-//
-//    protected MBMessage updateMessage(ActionRequest actionRequest)
-//            throws Exception {
-//
-//        String className = ParamUtil.getString(actionRequest, "className");
-//        long classPK = ParamUtil.getLong(actionRequest, "classPK");
-//
-//        long messageId = ParamUtil.getLong(actionRequest, "messageId");
-//
-//        long threadId = ParamUtil.getLong(actionRequest, "threadId");
-//        long parentMessageId = ParamUtil.getLong(
-//                actionRequest, "parentMessageId");
-//        String subject = ParamUtil.getString(actionRequest, "subject");
-//        String body = ParamUtil.getString(actionRequest, "body");
-//
-//        ServiceContext serviceContext = ServiceContextFactory.getInstance(
-//                MBMessage.class.getName(), actionRequest);
-//
-//        MBMessage message = null;
-//
-//        if (messageId <= 0) {
-//
-//            // Add message
-//
-//            message = MBMessageServiceUtil.addDiscussionMessage(
-//                    className, classPK, threadId, parentMessageId, subject, body,
-//                    serviceContext);
-//        } else {
-//
-//            // Update message
-//
-//            message = MBMessageServiceUtil.updateDiscussionMessage(
-//                    className, classPK, messageId, subject, body, serviceContext);
-//        }
-//
-//        return message;
-//    }
+    @RequestMapping(params = "action=verContenido")
+    public String verContenido(RenderRequest request, RenderResponse response, @RequestParam("cursoId") Long cursoId, @RequestParam("contenidoId") Long contenidoId, Model model) {
+        log.debug("Ver contenido");
+        curso = cursoDao.obtiene(cursoId);
+        model.addAttribute("curso", curso);
+        model.addAttribute("contenidoId", contenidoId);
+        ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+        try {
+            AssetEntry contenido = AssetEntryServiceUtil.getEntry(new Long(contenidoId));
+            log.debug("Contenido: " + contenido);
+            if (contenido.getClassName().equals(JournalArticle.class.getName())) {
+                JournalArticleResource articleResource = JournalArticleResourceLocalServiceUtil.getArticleResource(contenido.getClassPK());
+                String templateId = (String) request.getAttribute("JOURNAL_TEMPLATE_ID");
+                String languageId = LanguageUtil.getLanguageId(request);
+                int articlePage = ParamUtil.getInteger(request, "page", 1);
+                String xmlRequest = PortletRequestUtil.toXML(request, response);
+                model.addAttribute("currentURL", themeDisplay.getURLCurrent());
+
+                JournalArticleDisplay articleDisplay = JournalContentUtil.getDisplay(articleResource.getGroupId(), articleResource.getArticleId(), templateId, null, languageId, themeDisplay, articlePage, xmlRequest);
+
+                if (articleDisplay != null) {
+                    AssetEntryServiceUtil.incrementViewCounter(contenido.getClassName(), articleDisplay.getResourcePrimKey());
+                    model.addAttribute("articleDisplay", articleDisplay);
+
+                    String[] availableLocales = articleDisplay.getAvailableLocales();
+                    if (availableLocales.length > 0) {
+                        model.addAttribute("availableLocales", availableLocales);
+                    }
+                    int discussionMessagesCount = MBMessageLocalServiceUtil.getDiscussionMessagesCount(PortalUtil.getClassNameId(JournalArticle.class.getName()), articleDisplay.getResourcePrimKey(), WorkflowConstants.STATUS_APPROVED);
+                    if (discussionMessagesCount > 0) {
+                        model.addAttribute("discussionMessages", true);
+                    }
+                }
+            } else if (contenido.getClassName().equals(IGImage.class.getName())) {
+                IGImage image = IGImageLocalServiceUtil.getImage(contenido.getClassPK());
+                AssetEntryServiceUtil.incrementViewCounter(contenido.getClassName(), image.getImageId());
+                model.addAttribute("contenido", contenido);
+                model.addAttribute("image", image);
+                model.addAttribute("imageURL", themeDisplay.getPathImage() + "/image_gallery?img_id=" + image.getLargeImageId() + "&t=" + ImageServletTokenUtil.getToken(image.getLargeImageId()));
+            } else if (contenido.getClassName().equals(DLFileEntry.class.getName())) {
+                DLFileEntry fileEntry = DLFileEntryLocalServiceUtil.getFileEntry(contenido.getClassPK());
+
+                model.addAttribute("document", fileEntry);
+                model.addAttribute("documentURL", themeDisplay.getPathMain() + "/document_library/get_file?p_l_id=" + themeDisplay.getPlid() + "&folderId=" + fileEntry.getFolderId() + "&name=" + HttpUtil.encodeURL(fileEntry.getName()));
+            }
+        } catch (Exception e) {
+            log.error("Error al traer el contenido", e);
+        }
+
+        return "curso/verContenido";
+    }
 
     public static AssetEntryQuery getAssetEntryQuery(
             PortletPreferences preferences, long scopeGroupId)
