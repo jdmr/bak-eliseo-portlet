@@ -1,7 +1,5 @@
 <%@ page import="com.liferay.portal.kernel.language.LanguageUtil" %>
 <%@ include file="/WEB-INF/jsp/include.jsp" %>
-<link rel="stylesheet" href="<%= request.getContextPath() %>/css/main.css" type="text/css"/>
-<script type="text/javascript" src="<%= request.getContextPath() %>/js/application.js"></script>
 <div class="Curso">
     <h1><liferay-ui:message key="javax.portlet.title" /> (<%= LanguageUtil.format(pageContext, "curso.cantidad",request.getAttribute("cantidad"),false) %>)</h1>
     <portlet:renderURL var="actionUrl" >
@@ -13,10 +11,7 @@
             <table>
                 <tbody>
                     <tr class="prop">
-                        <td valign="middle" class="name">
-                            <label for="<portlet:namespace />filtro"><liferay-ui:message key="curso.buscar" /></label>
-                        </td>
-                        <td valign="top" class="value">
+                        <td>
                             <input type="text" name="<portlet:namespace />filtro" id="<portlet:namespace />filtro" value="" />
                             <input type="submit" name="<portlet:namespace />_busca" value='<liferay-ui:message key="curso.buscar" />'/>
                         </td>
@@ -84,7 +79,6 @@
         <span class="menuButton"><a class="create" href='<portlet:renderURL><portlet:param name="action" value="nuevo"/></portlet:renderURL>'><liferay-ui:message key="curso.nuevo" /></a></span>
     </div>
     <script type="text/javascript">
-        document.<portlet:namespace />fm.<portlet:namespace />filtro.focus();
         <c:if test="${cursos != null}">
             highlightTableRows("<portlet:namespace />cursos")
         </c:if>
