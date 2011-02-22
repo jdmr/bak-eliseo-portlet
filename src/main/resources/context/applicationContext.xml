@@ -30,11 +30,11 @@
     <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
         <property name="dataSource" ref="dataSource" />
         <property name="configurationClass" value="org.hibernate.cfg.AnnotationConfiguration" />
-        <property name="packagesToScan" value="mx.edu.um.portlets"/>
+        <property name="packagesToScan" value="mx.edu.um.portlets.eliseo.dao"/>
         <property name="hibernateProperties">
             <props>
                 <prop key="hibernate.show_sql">true</prop>
-                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.hbm2ddl.auto">create</prop>
                 <prop key="hibernate.cache.use_second_level_cache">true</prop>
                 <prop key="hibernate.cache.provider_class">org.hibernate.cache.EhCacheProvider</prop>
             </props>

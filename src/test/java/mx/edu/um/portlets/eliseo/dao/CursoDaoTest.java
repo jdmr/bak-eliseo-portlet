@@ -47,19 +47,6 @@ public class CursoDaoTest {
         cursoId = curso.getId();
     }
     
-//    @Test
-//    public void debieraMostrarListaDeResultados() {
-//        log.debug("Debiera mostrar lista de resultados");
-//        Set<Long> comunidades = new HashSet<Long>();
-//        comunidades.add(new Long(1));
-//        Map<String, Object> params = new HashMap<String, Object>();
-//        params.put("comunidades", comunidades);
-//        List<Curso> cursos = cursoDao.busca(params);
-//        log.debug("Resultados: {}",cursos);
-//        assertNotNull(cursos);
-//        assertTrue(cursos.size() >= 1);
-//    }
-
     @Test(expected=org.springframework.dao.DataIntegrityViolationException.class)
     public void noDebieraCrearCursoDuplicado() {
         log.debug("No debiera crear curso duplicado");
@@ -77,6 +64,7 @@ public class CursoDaoTest {
         Map<String, Object> params = new HashMap<String,Object>();
         params.put("filtro", "test");
         List<Curso> cursos = cursoDao.busca(params);
+        assertNotNull(cursos);
     }
     
     @Test
