@@ -20,8 +20,8 @@
                 <br />
 
                 <liferay-ui:ratings
-                    className="<%= JournalArticle.class.getName()%>"
-                    classPK="${articleDisplay.resourcePrimKey}"
+                    className="${className}"
+                    classPK="${resourcePrimKey}"
                     />
 
                 <c:if test="${discussionMessages != null}">
@@ -48,7 +48,6 @@
 
                 <br />
 
-
             </div>
         </c:when>
         <c:when test="${image != null}">
@@ -61,6 +60,7 @@
             <a href="${documentURL}">${document.title}</a>
             <p>${document.description}</p>
             <c:if test="${video}">
+                <script type="text/javascript" src="<%= request.getContextPath() %>/jwplayer/jwplayer.js"></script>
                 <div id="container">Loading the player...</div>
                 <script type="text/javascript">
                     jwplayer("container").setup({
@@ -83,6 +83,7 @@
             </c:if>
         </c:when>
     </c:choose>
+                
     <div>
         <portlet:renderURL var="verCurso" >
             <portlet:param name="action" value="ver" />

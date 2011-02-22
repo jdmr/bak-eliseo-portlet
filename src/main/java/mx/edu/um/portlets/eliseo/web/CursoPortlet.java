@@ -1,10 +1,13 @@
-package mx.edu.um.portlets.cursos;
+package mx.edu.um.portlets.eliseo.web;
 
+import mx.edu.um.portlets.eliseo.dao.CursoDao;
+import mx.edu.um.portlets.eliseo.dao.Curso;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.servlet.ImageServletTokenUtil;
+import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
@@ -21,6 +24,8 @@ import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.LayoutLocalServiceUtil;
+import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.PortletPreferencesFactoryUtil;
@@ -38,7 +43,9 @@ import com.liferay.portlet.journal.model.JournalArticleDisplay;
 import com.liferay.portlet.journal.model.JournalArticleResource;
 import com.liferay.portlet.journal.service.JournalArticleResourceLocalServiceUtil;
 import com.liferay.portlet.journalcontent.util.JournalContentUtil;
+import com.liferay.portlet.messageboards.model.MBMessage;
 import com.liferay.portlet.messageboards.service.MBMessageLocalServiceUtil;
+import com.liferay.portlet.messageboards.service.MBMessageServiceUtil;
 import com.liferay.util.portlet.PortletRequestUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -265,7 +272,7 @@ public class CursoPortlet {
         log.debug("Edita contenido");
         curso = cursoDao.obtiene(id);
         model.addAttribute("curso", curso);
-        
+
         ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
         PortletPreferences preferences = request.getPreferences();
         String portletResource = ParamUtil.getString(request, "portletResource");
@@ -285,8 +292,8 @@ public class CursoPortlet {
 
         try {
             AssetEntryQuery assetEntryQuery = new AssetEntryQuery();
-            
-            String[] allAssetTagNames = new String[] {curso.getCodigo().toLowerCase()};
+
+            String[] allAssetTagNames = new String[]{curso.getCodigo().toLowerCase()};
             assetEntryQuery = getAssetEntryQuery(preferences, scopeGroupId);
 
             long[] assetTagIds = AssetTagLocalServiceUtil.getTagIds(scopeGroupId, allAssetTagNames);
@@ -303,13 +310,13 @@ public class CursoPortlet {
 
                 List<AssetEntry> results = AssetEntryServiceUtil.getEntries(assetEntryQuery);
 
-                for(AssetEntry asset : results) {
+                for (AssetEntry asset : results) {
                     log.debug("Asset: " + asset.getTitle() + " : " + asset.getDescription() + " : " + asset.getMimeType() + " : " + asset.getClassName());
                     disponibles.add(new KeyValuePair(new Long(asset.getPrimaryKey()).toString(), asset.getTitle()));
                 }
 
             }
-            
+
             model.addAttribute("disponibles", disponibles);
             model.addAttribute("seleccionados", seleccionados);
 
@@ -326,7 +333,7 @@ public class CursoPortlet {
             @ModelAttribute("curso") Curso curso, BindingResult result,
             Model model, SessionStatus sessionStatus, @RequestParam("cursoId") Long id, @RequestParam("seleccionados") String seleccionados) {
         log.debug("Actualizando contenido");
-        log.debug("CursoId: {} | Contenidos: ", new Object[] {id, seleccionados});
+        log.debug("CursoId: {} | Contenidos: ", new Object[]{id, seleccionados});
         if (seleccionados.length() == 0) {
             Map params = request.getParameterMap();
             String[] contenidoSeleccionado = (String[]) params.get("contenidoSeleccionado");
@@ -334,7 +341,7 @@ public class CursoPortlet {
         }
 
         curso = cursoDao.obtiene(id);
-        
+
         curso.setContenidos(seleccionados);
 
         cursoDao.actualiza(curso);
@@ -382,6 +389,12 @@ public class CursoPortlet {
                 model.addAttribute("contenido", contenido);
                 model.addAttribute("image", image);
                 model.addAttribute("imageURL", themeDisplay.getPathImage() + "/image_gallery?img_id=" + image.getLargeImageId() + "&t=" + ImageServletTokenUtil.getToken(image.getLargeImageId()));
+                int discussionMessagesCount = MBMessageLocalServiceUtil.getDiscussionMessagesCount(PortalUtil.getClassNameId(IGImage.class.getName()),
+                        image.getPrimaryKey(),
+                        WorkflowConstants.STATUS_APPROVED);
+                if (discussionMessagesCount > 0) {
+                    model.addAttribute("discussionMessages", true);
+                }
             } else if (contenido.getClassName().equals(DLFileEntry.class.getName())) {
                 DLFileEntry fileEntry = DLFileEntryLocalServiceUtil.getFileEntry(contenido.getClassPK());
 
@@ -390,9 +403,15 @@ public class CursoPortlet {
                 //model.addAttribute("documentURL", themeDisplay.getPathMain() + "/document_library/get_file?p_l_id=" + themeDisplay.getPlid() + "&folderId=" + fileEntry.getFolderId() + "&name=" + HttpUtil.encodeURL(fileEntry.getName()));
                 model.addAttribute("documentURL", fileUrl);
 
-                log.debug("NAME: {}",fileEntry.getTitle());
+                log.debug("NAME: {}", fileEntry.getTitle());
                 if (fileEntry.getTitle().endsWith("flv")) {
-                    model.addAttribute("video",true);
+                    model.addAttribute("video", true);
+                }
+                int discussionMessagesCount = MBMessageLocalServiceUtil.getDiscussionMessagesCount(PortalUtil.getClassNameId(DLFileEntry.class.getName()),
+                        fileEntry.getPrimaryKey(),
+                        WorkflowConstants.STATUS_APPROVED);
+                if (discussionMessagesCount > 0) {
+                    model.addAttribute("discussionMessages", true);
                 }
             }
         } catch (Exception e) {
@@ -581,5 +600,91 @@ public class CursoPortlet {
         }
 
         return groupIds;
+    }
+
+    @RequestMapping(params = "action=discusion")
+    public void discusion(ActionRequest request, ActionResponse response,
+            @ModelAttribute("curso") Curso curso, BindingResult result,
+            Model model, SessionStatus sessionStatus, @RequestParam("cursoId") Long id, @RequestParam("contenidoId") Long contenidoId) {
+        log.debug("Ver discusion");
+        log.debug("CursoId: " + id);
+
+        try {
+            String cmd = ParamUtil.getString(request, Constants.CMD);
+            if (cmd.equals(Constants.ADD) || cmd.equals(Constants.UPDATE)) {
+                MBMessage message = updateMessage(request);
+            } else if (cmd.equals(Constants.DELETE)) {
+                deleteMessage(request);
+            }
+        } catch (Exception e) {
+            log.error("Error al intentar actualizar el mensaje", e);
+        }
+
+        response.setRenderParameter("action", "verContenido");
+        response.setRenderParameter("cursoId", id.toString());
+        response.setRenderParameter("contenidoId", contenidoId.toString());
+    }
+
+    protected void deleteMessage(ActionRequest actionRequest) throws Exception {
+        long groupId = PortalUtil.getScopeGroupId(actionRequest);
+
+        String className = ParamUtil.getString(actionRequest, "className");
+        long classPK = ParamUtil.getLong(actionRequest, "classPK");
+
+        String permissionClassName = ParamUtil.getString(
+                actionRequest, "permissionClassName");
+
+        long permissionClassPK = ParamUtil.getLong(
+                actionRequest, "permissionClassPK");
+
+        long messageId = ParamUtil.getLong(actionRequest, "messageId");
+
+
+        MBMessageServiceUtil.deleteDiscussionMessage(
+                groupId, className, classPK, permissionClassName, permissionClassPK,
+                messageId);
+    }
+
+    protected MBMessage updateMessage(ActionRequest actionRequest)
+            throws Exception {
+
+        String className = ParamUtil.getString(actionRequest, "className");
+        long classPK = ParamUtil.getLong(actionRequest, "classPK");
+        String permissionClassName = ParamUtil.getString(
+                actionRequest, "permissionClassName");
+        long permissionClassPK = ParamUtil.getLong(
+                actionRequest, "permissionClassPK");
+
+        long messageId = ParamUtil.getLong(actionRequest, "messageId");
+
+        long threadId = ParamUtil.getLong(actionRequest, "threadId");
+        long parentMessageId = ParamUtil.getLong(
+                actionRequest, "parentMessageId");
+        String subject = ParamUtil.getString(actionRequest, "subject");
+        String body = ParamUtil.getString(actionRequest, "body");
+
+        ServiceContext serviceContext = ServiceContextFactory.getInstance(
+                MBMessage.class.getName(), actionRequest);
+
+        MBMessage message = null;
+
+        if (messageId <= 0) {
+
+            // Add message
+
+            message = MBMessageServiceUtil.addDiscussionMessage(
+                    serviceContext.getScopeGroupId(), className, classPK,
+                    permissionClassName, permissionClassPK, threadId,
+                    parentMessageId, subject, body, serviceContext);
+        } else {
+
+            // Update message
+
+            message = MBMessageServiceUtil.updateDiscussionMessage(
+                    className, classPK, permissionClassName, permissionClassPK,
+                    messageId, subject, body, serviceContext);
+        }
+
+        return message;
     }
 }

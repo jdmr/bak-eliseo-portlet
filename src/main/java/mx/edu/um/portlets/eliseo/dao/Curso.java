@@ -1,4 +1,4 @@
-package mx.edu.um.portlets.cursos;
+package mx.edu.um.portlets.eliseo.dao;
 
 import java.io.Serializable;
 import javax.persistence.Column;
