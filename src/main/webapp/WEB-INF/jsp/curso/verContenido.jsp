@@ -2,7 +2,6 @@
 <%@ page import="com.liferay.portal.kernel.language.LanguageUtil" %>
 <%@ include file="/WEB-INF/jsp/include.jsp" %>
 
-<link rel="stylesheet" href="<%= request.getContextPath()%>/css/main.css" type="text/css"/>
 <div class="Curso">
     <c:choose>
         <c:when test="${articleDisplay != null}">
@@ -23,7 +22,7 @@
                 <liferay-ui:ratings
                     className="<%= JournalArticle.class.getName()%>"
                     classPK="${articleDisplay.resourcePrimKey}"
-                />
+                    />
 
                 <c:if test="${discussionMessages != null}">
                     <br />
@@ -45,7 +44,7 @@
                     subject="${articleDisplay.title}"
                     redirect="${currentURL}"
                     ratingsEnabled="true"
-                />
+                    />
 
                 <br />
 
@@ -59,8 +58,29 @@
         </c:when>
         <c:when test="${document != null}">
             <h1>${document.title}</h1>
-            <a href="${documentURL}">${document.name}</a>
+            <a href="${documentURL}">${document.title}</a>
             <p>${document.description}</p>
+            <c:if test="${video}">
+                <div id="container">Loading the player...</div>
+                <script type="text/javascript">
+                    jwplayer("container").setup({
+                        flashplayer:"<%= request.getContextPath() %>/jwplayer/player.swf"
+                        , file: "${documentURL}"
+                        , provider: 'video'
+                        , autostart: 'true'
+                    });
+                </script>
+                <%--
+                <a  
+                    href="${documentURL}"
+                    style="display:block;width:520px;height:330px"  
+                    id="player"> 
+                </a>
+                <script>
+                    flowplayer("player", "<%= request.getContextPath()%>/flowplayer/flowplayer-3.2.6.swf");
+                </script>
+                --%>
+            </c:if>
         </c:when>
     </c:choose>
     <div>
