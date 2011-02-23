@@ -57,6 +57,8 @@ import javax.portlet.ActionResponse;
 import javax.portlet.PortletPreferences;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
+import mx.edu.um.portlets.eliseo.dao.Examen;
+import mx.edu.um.portlets.eliseo.dao.ExamenDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +86,9 @@ public class CursoPortlet {
     private Curso curso;
     @Autowired
     private CursoValidator cursoValidator;
+    @Autowired
+    private ExamenDao examenDao;
+    private Examen examen;
 
     public CursoPortlet() {
         log.debug("Nueva instancia del portlet de cursos");
@@ -104,7 +109,7 @@ public class CursoPortlet {
         }
         return curso;
     }
-
+    
     @RequestMapping
     public String lista(RenderRequest request,
             @RequestParam(value = "offset", required = false) Integer offset,
@@ -230,7 +235,11 @@ public class CursoPortlet {
             contenidos = new ArrayList();
         }
         for (String contenidoId : lista) {
-            contenidos.add(AssetEntryServiceUtil.getEntry(new Long(contenidoId)));
+            if (contenidoId.startsWith("E")) {
+                contenidos.add(examenDao.obtiene(new Long(contenidoId.substring(1))));
+            } else {
+                contenidos.add(AssetEntryServiceUtil.getEntry(new Long(contenidoId)));
+            }
         }
         model.addAttribute("contenidos", contenidos);
 
@@ -315,6 +324,15 @@ public class CursoPortlet {
                     disponibles.add(new KeyValuePair(new Long(asset.getPrimaryKey()).toString(), asset.getTitle()));
                 }
 
+            }
+            
+            Map<String, Object> params = new HashMap<String, Object>();
+            List<Long> communities = new ArrayList<Long>();
+            communities.add(scopeGroupId);
+            params.put("communities", communities);
+            List<Examen> examenes = examenDao.busca(params);
+            for(Examen examen : examenes) {
+                disponibles.add(new KeyValuePair("E"+examen.getId(), examen.getCodigo()));
             }
 
             model.addAttribute("disponibles", disponibles);
@@ -686,5 +704,43 @@ public class CursoPortlet {
         }
 
         return message;
+    }
+    
+    
+    @RequestMapping(params = "action=nuevoExamen")
+    public String nuevoExamen(
+            RenderRequest request, 
+            RenderResponse response, 
+            @RequestParam("cursoId") Long cursoId, 
+            Model model) {
+        
+        curso = cursoDao.obtiene(cursoId);
+        examen = new Examen();
+        examen.setCurso(curso);
+        model.addAttribute("curso", curso);
+        model.addAttribute("examen", examen);
+        
+        return "examen/nuevo";
+    }
+    
+    @RequestMapping(params = "action=creaExamen")
+    public void creaExamen(ActionRequest request, ActionResponse response,
+            @ModelAttribute("examen") Examen examen, BindingResult result,
+            Model model, SessionStatus sessionStatus) throws PortalException, SystemException {
+        
+        log.debug("Creando el examen");
+        examen.setCurso(cursoDao.obtiene(examen.getCurso().getId()));
+        examen = examenDao.crea(examen);
+        
+        response.setRenderParameter("action", "ver");
+        response.setRenderParameter("cursoId", examen.getCurso().getId().toString());
+    }
+
+    public Examen getExamen() {
+        return examen;
+    }
+
+    public void setExamen(Examen examen) {
+        this.examen = examen;
     }
 }

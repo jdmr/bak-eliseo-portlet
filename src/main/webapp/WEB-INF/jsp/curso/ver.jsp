@@ -15,6 +15,10 @@
         <portlet:param name="action" value="elimina" />
         <portlet:param name="cursoId" value="${curso.id}" />
     </portlet:actionURL>
+    <portlet:renderURL var="nuevoExamen" >
+        <portlet:param name="action" value="nuevoExamen" />
+        <portlet:param name="cursoId" value="${curso.id}" />
+    </portlet:renderURL>
 
     <div class="dialog">
         <table>
@@ -81,6 +85,7 @@
         <span class="button"><a class="edit" href="${editaCurso}"><liferay-ui:message key="curso.edita" /></a></span>
         <span class="button"><a class="edit" href="${editaContenido}"><liferay-ui:message key="curso.contenido" /></a></span>
         <span class="button"><a class="delete" href="${eliminaCurso}"><liferay-ui:message key="curso.elimina" /></a></span>
+        <span class="button"><a class="edit" href="${nuevoExamen}"><liferay-ui:message key="examen.nuevo" /></a></span>
         <span class="button"><a class="back" href="<portlet:renderURL portletMode="view"/>"><liferay-ui:message key="curso.regresa" /></a></span>
     </div>
 </div>

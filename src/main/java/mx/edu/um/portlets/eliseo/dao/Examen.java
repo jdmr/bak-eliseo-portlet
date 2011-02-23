@@ -100,6 +100,14 @@ public class Examen {
     public void setCurso(Curso curso) {
         this.curso = curso;
     }
+    
+    public Long getPrimaryKey() {
+        return id;
+    }
+    
+    public String getTitle() {
+        return nombre;
+    }
 
     @Override
     public boolean equals(Object obj) {
