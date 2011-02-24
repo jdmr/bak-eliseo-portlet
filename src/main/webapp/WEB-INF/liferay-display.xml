@@ -4,5 +4,6 @@
 <display>
     <category name="Academia">
         <portlet id="Cursos" />
+        <portlet id="Salones" />
     </category>
 </display>
