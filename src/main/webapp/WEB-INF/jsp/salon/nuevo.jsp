@@ -7,7 +7,7 @@
     </portlet:actionURL>
 
     <form:form name="salonForm" commandName="salon" method="post" action="${actionUrl}" >
-        <form:hidden id="<portlet:namespace />cursoId" path="curso.id" />
+        <input type="hidden" id="<portlet:namespace />cursoId" name="<portlet:namespace />cursoId" />
         <form:hidden id="<portlet:namespace />maestroId" path="maestroId" />
         <div class="dialog">
             <table>
@@ -15,83 +15,52 @@
 
                     <tr class="prop">
                         <td valign="top" class="name">
-                            <label for="nombre"><liferay-ui:message key="salon.nombre" /></label>
+                            <label for="<portlet:namespace />nombre"><liferay-ui:message key="salon.nombre" /></label>
                         </td>
                         <td valign="top" class="value">
-                            <form:input path="nombre" maxlength="128"/>
+                            <form:input id="<portlet:namespace />nombre" path="nombre" maxlength="128"/>
                             <form:errors cssClass="errors" path="nombre" cssStyle="color:red;" />
                         </td>
                     </tr>
 
                     <tr class="prop">
                         <td valign="top" class="name">
-                            <label for="cursoNombre"><liferay-ui:message key="salon.curso" /></label>
+                            <label for="<portlet:namespace />cursoNombre"><liferay-ui:message key="salon.curso" /></label>
                         </td>
                         <td valign="top" class="value">
-                            <div id="<portlet:namespace />cursoNombre"></div>
+                            <div id="<portlet:namespace />cursoDiv"></div>
+                            <input type="text" name="<portlet:namespace />cursoNombre" id="<portlet:namespace />cursoNombre" value="" />
                             <form:errors cssClass="errors" path="curso" cssStyle="color:red;" />
-                            <aui:script use="aui-autocomplete">
-
-                                var dataSource = new A.DataSource.IO(
-                                    {
-                                        source: '<portlet:resourceURL id="buscaCurso"/>'
-                                    }
-                                );
-
-                                var autocomplete = new A.AutoComplete(
-                                    {
-                                        dataSource: dataSource,
-                                        delimChar: ',',
-                                        contentBox: '#<portlet:namespace />cursoNombre',
-                                        matchKey: 'name',
-                                        schema: {
-                                            resultListLocator: 'response',
-                                            resultFields: ['key', 'name', 'description']
-                                        },
-                                        schemaType:'json',
-                                        typeAhead: true,
-                                        input: '#<portlet:namespace />cursoId'
-                                    }
-                                );
-
-                                autocomplete.generateRequest = function(query) {
-                                    return {
-                                        request: '&cursoNombre=' + query
-                                    };
-                                }
-
-                                autocomplete.render();
-
-                            </aui:script>
                         </td>
                     </tr>
 
                     <tr class="prop">
                         <td valign="top" class="name">
-                            <label for="maestroNombre"><liferay-ui:message key="salon.maestro" /></label>
+                            <label for="<portlet:namespace />maestroNombre"><liferay-ui:message key="salon.maestro" /></label>
                         </td>
                         <td valign="top" class="value">
-                            <input type="text" name="maestroNombre" id="maestroNombre" value="${salon.maestroNombre}"
+                            <div id="<portlet:namespace />maestroDiv"></div>
+                            <input type="text" name="maestroNombre" id="<portlet:namespace />maestroNombre" value="" />
                             <form:errors cssClass="errors" path="maestroId" cssStyle="color:red;" />
                         </td>
                     </tr>
 
                     <tr class="prop">
                         <td valign="top" class="name">
-                            <label for="inicia"><liferay-ui:message key="salon.inicia" /></label>
+                            <label for="<portlet:namespace />inicia"><liferay-ui:message key="salon.inicia" /></label>
                         </td>
                         <td valign="top" class="value">
-                            <form:input path="inicia" maxlength="128"/>
+                            <input type="text" name="inicia" id="<portlet:namespace />inicia" value="" />
                             <form:errors cssClass="errors" path="inicia" cssStyle="color:red;" />
                         </td>
                     </tr>
 
                     <tr class="prop">
                         <td valign="top" class="name">
-                            <label for="termina"><liferay-ui:message key="salon.termina" /></label>
+                            <label for="<portlet:namespace />termina"><liferay-ui:message key="salon.termina" /></label>
                         </td>
                         <td valign="top" class="value">
-                            <form:input path="termina" maxlength="128"/>
+                            <input type="text" name="termina" id="<portlet:namespace />termina" value="" />
                             <form:errors cssClass="errors" path="termina" cssStyle="color:red;" />
                         </td>
                     </tr>
@@ -108,4 +77,39 @@
         document.salonForm.nombre.focus();
     </script>
 </div>
+<link type="text/css" href="<%= request.getContextPath() %>/css/custom-theme/jquery-ui-1.8.10.custom.css" rel="Stylesheet" />
+<!-- Grab Google CDN's jQuery. fall back to local if necessary -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+<script>!window.jQuery && document.write(unescape('%3Cscript src="<%= request.getContextPath() %>/js/jquery-1.5.1.min.js"%3E%3C/script%3E'))</script>
+<script src="<%= request.getContextPath() %>/js/jquery-ui-1.8.10.custom.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("input#<portlet:namespace />cursoNombre")
+        .autocomplete({
+            source: "<portlet:resourceURL id='buscaCurso'/>",
+            select: function(event, ui) {
+                $("input#<portlet:namespace />cursoId").val(ui.item.id);
+                $("#<portlet:namespace />cursoDiv").load('<portlet:resourceURL id="asignaCurso" />',{id:ui.item.id},function() {
+                    $("input#<portlet:namespace />cursoNombre").val("");
+                    $("input#<portlet:namespace />maestroNombre").focus();
+                });
+                return false;
+            }
+        });
+        $("input#<portlet:namespace />maestroNombre")
+        .autocomplete({
+            source: "<portlet:resourceURL id='buscaMaestro'/>",
+            select: function(event, ui) {
+                $("input#<portlet:namespace />maestroId").val(ui.item.id);
+                $("#<portlet:namespace />maestroDiv").load('<portlet:resourceURL id="asignaMaestro" />',{id:ui.item.id},function() {
+                    $("input#<portlet:namespace />maestroNombre").val(ui.item.nombre);
+                    $("input#<portlet:namespace />inicia").focus();
+                });
+                return false;
+            }
+        });
+        $("input#<portlet:namespace />inicia").datepicker();
+        $("input#<portlet:namespace />termina").datepicker();
+    });
 
+</script>
