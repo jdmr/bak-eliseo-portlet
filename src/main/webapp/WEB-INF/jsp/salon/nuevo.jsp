@@ -7,7 +7,7 @@
     </portlet:actionURL>
 
     <form:form name="salonForm" commandName="salon" method="post" action="${actionUrl}" >
-        <input type="hidden" id="<portlet:namespace />cursoId" name="<portlet:namespace />cursoId" />
+        <input type="hidden" id="<portlet:namespace />cursoId" name="<portlet:namespace />cursoId" value="<c:if test='${salon.curso != null}'><c:out value='${salon.curso.id}'/></c:if>"/>
         <form:hidden id="<portlet:namespace />maestroId" path="maestroId" />
         <div class="dialog">
             <table>
@@ -28,7 +28,24 @@
                             <label for="<portlet:namespace />cursoNombre"><liferay-ui:message key="salon.curso" /></label>
                         </td>
                         <td valign="top" class="value">
-                            <div id="<portlet:namespace />cursoDiv"></div>
+                            <div id="<portlet:namespace />cursoDiv">
+                                <c:if test="${salon.curso != null}">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th><liferay-ui:message key="curso.codigo" /></th>
+                                                <th><liferay-ui:message key="curso.nombre" /></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>${salon.curso.codigo}</td>
+                                                <td>${salon.curso.nombre}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </c:if>
+                            </div>
                             <input type="text" name="<portlet:namespace />cursoNombre" id="<portlet:namespace />cursoNombre" value="" />
                             <form:errors cssClass="errors" path="curso" cssStyle="color:red;" />
                         </td>
@@ -39,9 +56,24 @@
                             <label for="<portlet:namespace />maestroNombre"><liferay-ui:message key="salon.maestro" /></label>
                         </td>
                         <td valign="top" class="value">
-                            <div id="<portlet:namespace />maestroDiv"></div>
+                            <div id="<portlet:namespace />maestroDiv">
+                                <c:if test="${salon.maestroNombre != null && salon.maestroNombre != ''}">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th><liferay-ui:message key="usuario.nombre" /></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>${salon.maestroNombre}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </c:if>
+                            </div>
                             <input type="text" name="maestroNombre" id="<portlet:namespace />maestroNombre" value="" />
-                            <form:errors cssClass="errors" path="maestroId" cssStyle="color:red;" />
+                            <form:errors cssClass="errors" path="maestroNombre" cssStyle="color:red;" />
                         </td>
                     </tr>
 
