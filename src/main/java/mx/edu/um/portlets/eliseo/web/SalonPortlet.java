@@ -6,7 +6,6 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.Group;
@@ -17,12 +16,14 @@ import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.RenderRequest;
@@ -35,6 +36,7 @@ import mx.edu.um.portlets.eliseo.dao.SalonDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -74,6 +76,7 @@ public class SalonPortlet {
     public void inicializar(PortletRequestDataBinder binder) {
         if (binder.getTarget() instanceof Salon) {
             binder.setValidator(salonValidator);
+            binder.registerCustomEditor(Date.class, null, new CustomDateEditor(new SimpleDateFormat("dd/MM/yyyy"), false));
         }
     }
 
@@ -131,6 +134,7 @@ public class SalonPortlet {
     @RequestMapping(params = "action=crea")
     public void crea(ActionRequest request, ActionResponse response,
             @RequestParam Long cursoId,
+            @RequestParam Long maestroId,
             @ModelAttribute("salon") Salon salon,
             BindingResult result,
             Model model, SessionStatus sessionStatus) throws PortalException, SystemException {
@@ -140,7 +144,7 @@ public class SalonPortlet {
         if (cursoId != null && cursoId > 0) {
             salon.setCurso(cursoDao.obtiene(cursoId));
         }
-        
+
         salonValidator.validate(salon, result);
         if (!result.hasErrors()) {
             salon = salonDao.crea(salon);
@@ -149,6 +153,75 @@ public class SalonPortlet {
             log.error("No se pudo guardar el salon");
             response.setRenderParameter("action", "nuevoError");
         }
+    }
+
+    @RequestMapping(params = "action=ver")
+    public String ver(RenderRequest request, @RequestParam("salonId") Long id, Model model) throws PortalException, SystemException {
+        log.debug("Ver salon");
+        salon = salonDao.obtiene(id);
+        model.addAttribute("salon", salon);
+
+        return "salon/ver";
+    }
+
+    @RequestMapping(params = "action=edita")
+    public String edita(RenderRequest request, @RequestParam("salonId") Long id, Model model) throws SystemException {
+        log.debug("Edita salon");
+        Salon salon = salonDao.obtiene(id);
+        log.debug("Salon: {} {} {} {} {} {}", new Object[]{salon.getNombre(), salon.getCurso().getId(), salon.getMaestroId(), salon.getMaestroNombre(), salon.getInicia(), salon.getTermina()});
+
+        model.addAttribute("salon", salonDao.obtiene(id));
+        return "salon/edita";
+    }
+
+    @RequestMapping(params = "action=editaError")
+    public String editaError(RenderRequest request, @RequestParam("salonId") Long id, Model model) throws SystemException {
+        log.debug("Regresando a edicion debido a un error");
+        return "salon/edita";
+    }
+
+    @RequestMapping(params = "action=actualiza")
+    public void actualiza(ActionRequest request, ActionResponse response,
+            @RequestParam Long cursoId,
+            @RequestParam Long maestroId,
+            @ModelAttribute("salon") Salon salon, BindingResult result,
+            Model model, SessionStatus sessionStatus) {
+        log.debug("Actualizando el salon");
+
+        log.debug("Salon: {}-{}-{}-{}-{}-{}-{}", new Object[]{salon.getNombre(), cursoId, maestroId, salon.getMaestroNombre(), salon.getInicia(), salon.getTermina(), maestroId});
+
+        if (cursoId != null && cursoId > 0) {
+            salon.setCurso(cursoDao.obtiene(cursoId));
+        }
+
+        if (maestroId != null & maestroId > 0) {
+            salon.setMaestroId(maestroId);
+            try {
+                User user = UserLocalServiceUtil.getUser(maestroId);
+                salon.setMaestroNombre(user.getFullName());
+            } catch (Exception e) {
+                log.error("Error al obtener al maestro",e);
+            }
+        }
+
+        salonValidator.validate(salon, result);
+        if (!result.hasErrors()) {
+            salonDao.actualiza(salon);
+            sessionStatus.setComplete();
+        } else {
+            log.error("No se pudo actualizar el salon");
+            response.setRenderParameter("action", "editaError");
+            response.setRenderParameter("salonId", salon.getId().toString());
+        }
+    }
+
+    @RequestMapping(params = "action=elimina")
+    public void elimina(ActionRequest request, ActionResponse response,
+            @ModelAttribute("salon") Salon salon, BindingResult result,
+            Model model, SessionStatus sessionStatus, @RequestParam("salonId") Long id) {
+        log.debug("Eliminando salon {}", id);
+        salonDao.elimina(id);
+        sessionStatus.setComplete();
     }
 
     @ResourceMapping(value = "buscaCurso")

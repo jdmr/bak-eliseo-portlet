@@ -47,7 +47,9 @@ import com.liferay.portlet.messageboards.model.MBMessage;
 import com.liferay.portlet.messageboards.service.MBMessageLocalServiceUtil;
 import com.liferay.portlet.messageboards.service.MBMessageServiceUtil;
 import com.liferay.util.portlet.PortletRequestUtil;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -62,6 +64,7 @@ import mx.edu.um.portlets.eliseo.dao.ExamenDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -98,6 +101,7 @@ public class CursoPortlet {
     public void inicializar(PortletRequestDataBinder binder) {
         if (binder.getTarget() instanceof Curso) {
             binder.setValidator(cursoValidator);
+            binder.registerCustomEditor(Date.class, null,new CustomDateEditor(new SimpleDateFormat("dd/MM/yyyy"),false));
         }
     }
 

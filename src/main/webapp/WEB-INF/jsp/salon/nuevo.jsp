@@ -8,7 +8,7 @@
 
     <form:form name="salonForm" commandName="salon" method="post" action="${actionUrl}" >
         <input type="hidden" id="<portlet:namespace />cursoId" name="<portlet:namespace />cursoId" value="<c:if test='${salon.curso != null}'><c:out value='${salon.curso.id}'/></c:if>"/>
-        <form:hidden id="<portlet:namespace />maestroId" path="maestroId" />
+        <input type="hidden" id="<portlet:namespace />maestroId" name="<portlet:namespace />maestroId" value="${salon.maestroId}" />
         <div class="dialog">
             <table>
                 <tbody>
@@ -82,7 +82,7 @@
                             <label for="<portlet:namespace />inicia"><liferay-ui:message key="salon.inicia" /></label>
                         </td>
                         <td valign="top" class="value">
-                            <input type="text" name="inicia" id="<portlet:namespace />inicia" value="" />
+                            <input type="text" name="inicia" id="<portlet:namespace />inicia" value="${salon.inicia}" />
                             <form:errors cssClass="errors" path="inicia" cssStyle="color:red;" />
                         </td>
                     </tr>
@@ -92,7 +92,7 @@
                             <label for="<portlet:namespace />termina"><liferay-ui:message key="salon.termina" /></label>
                         </td>
                         <td valign="top" class="value">
-                            <input type="text" name="termina" id="<portlet:namespace />termina" value="" />
+                            <input type="text" name="termina" id="<portlet:namespace />termina" value="${salon.termina}" />
                             <form:errors cssClass="errors" path="termina" cssStyle="color:red;" />
                         </td>
                     </tr>
@@ -100,9 +100,9 @@
                 </tbody>
             </table>
         </div>
-        <div class="buttons">
-            <span class="button"><input type="submit" name="<portlet:namespace />_crea" class="save" value="<liferay-ui:message key='salon.crea' />"/></span>
-            <span class="button"><a class="cancel" href="<portlet:renderURL portletMode="view"/>"><liferay-ui:message key="salon.cancela" /></a></span>
+        <div class="nav">
+            <span class="menuButton"><input type="submit" name="<portlet:namespace />_crea" class="save" value="<liferay-ui:message key='salon.crea' />"/></span>
+            <span class="menuButton"><a class="cancel" href="<portlet:renderURL portletMode="view"/>"><liferay-ui:message key="salon.cancela" /></a></span>
         </div>
     </form:form>
     <script type="text/javascript">

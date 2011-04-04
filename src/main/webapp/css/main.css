@@ -268,3 +268,39 @@
     color: #333;
     padding: 20px;
 }
+.Curso .nav .menuButton input.delete {
+    background: transparent url(../images/skin/database_delete.png) 5px 50% no-repeat;
+    padding-left: 28px;
+}
+.Curso .nav .menuButton input.edit {
+    background: transparent url(../images/skin/database_edit.png) 5px 50% no-repeat;
+    padding-left: 28px;
+}
+.Curso .nav .menuButton input.save {
+    background: transparent url(../images/skin/database_save.png) 5px 50% no-repeat;
+    padding-left: 28px;
+}
+.Curso .nav .menuButton input.create {
+    background: transparent url(../images/skin/database_add.png) 5px 50% no-repeat;
+    padding-left: 28px;
+}
+.Curso .nav .menuButton a.edit {
+    background: url(../images/skin/database_edit.png) center left no-repeat;
+    color: #333;
+    padding: 20px;
+}
+.Curso .nav .menuButton a.cancel {
+    background: url(../images/skin/database_delete.png) center left no-repeat;
+    color: #333;
+    padding: 20px;
+}
+.Curso .nav .menuButton a.delete {
+    background: url(../images/skin/database_delete.png) center left no-repeat;
+    color: #333;
+    padding: 20px;
+}
+.Curso .nav .menuButton a.back {
+    background: url(../images/skin/database_table.png) center left no-repeat;
+    color: #333;
+    padding: 20px;
+}
