@@ -16,6 +16,7 @@ import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,7 +24,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.RenderRequest;
@@ -33,6 +33,7 @@ import mx.edu.um.portlets.eliseo.dao.Curso;
 import mx.edu.um.portlets.eliseo.dao.CursoDao;
 import mx.edu.um.portlets.eliseo.dao.Salon;
 import mx.edu.um.portlets.eliseo.dao.SalonDao;
+import mx.edu.um.portlets.eliseo.dao.Sesion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,10 +64,14 @@ public class SalonPortlet {
     @Autowired
     private CursoDao cursoDao;
     private Salon salon;
+    private Sesion sesion;
     @Autowired
     private SalonValidator salonValidator;
     @Autowired
+    private SesionValidator sesionValidator;
+    @Autowired
     private ResourceBundleMessageSource messageSource;
+    private Map<Integer, String> dias;
 
     public SalonPortlet() {
         log.debug("Nueva instancia del portlet de salones");
@@ -161,16 +166,26 @@ public class SalonPortlet {
         salon = salonDao.obtiene(id);
         model.addAttribute("salon", salon);
 
+        ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm z");
+        sdf.setTimeZone(themeDisplay.getTimeZone());
+        List<Sesion> sesionesList = salonDao.obtieneSesiones(salon);
+        List<SesionVO> sesiones = new ArrayList<SesionVO>();
+        for(Sesion sesionLocal : sesionesList) {
+            sesiones.add(new SesionVO(sesionLocal, sdf));
+        }
+        model.addAttribute("sesiones", sesiones);
+        
         return "salon/ver";
     }
 
     @RequestMapping(params = "action=edita")
     public String edita(RenderRequest request, @RequestParam("salonId") Long id, Model model) throws SystemException {
         log.debug("Edita salon");
-        Salon salon = salonDao.obtiene(id);
+        salon = salonDao.obtiene(id);
         log.debug("Salon: {} {} {} {} {} {}", new Object[]{salon.getNombre(), salon.getCurso().getId(), salon.getMaestroId(), salon.getMaestroNombre(), salon.getInicia(), salon.getTermina()});
 
-        model.addAttribute("salon", salonDao.obtiene(id));
+        model.addAttribute("salon", salon);
         return "salon/edita";
     }
 
@@ -200,7 +215,7 @@ public class SalonPortlet {
                 User user = UserLocalServiceUtil.getUser(maestroId);
                 salon.setMaestroNombre(user.getFullName());
             } catch (Exception e) {
-                log.error("Error al obtener al maestro",e);
+                log.error("Error al obtener al maestro", e);
             }
         }
 
@@ -330,5 +345,92 @@ public class SalonPortlet {
         }
 
         return comunidades;
+    }
+
+    @RequestMapping(params = "action=nuevaSesion")
+    public String nuevaSesion(RenderRequest request, @RequestParam("salonId") Long id, Model model) {
+        log.debug("Nueva Sesion");
+        salon = salonDao.obtiene(id);
+
+        sesion = new Sesion();
+        sesion.setSalon(salon);
+
+        model.addAttribute("sesion", sesion);
+        model.addAttribute("dias", getDias(request));
+
+        return "salon/nuevaSesion";
+    }
+
+    public Map<Integer, String> getDias(RenderRequest request) {
+        if (dias == null) {
+            ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+
+            dias = new LinkedHashMap<Integer, String>();
+            for (int i = 1; i <= 7; i++) {
+                dias.put(i, messageSource.getMessage("dia" + i, null, themeDisplay.getLocale()));
+            }
+        }
+        return dias;
+    }
+
+    @RequestMapping(params = "action=creaSesion")
+    public void creaSesion(ActionRequest request, ActionResponse response,
+            @RequestParam String horaInicial,
+            @RequestParam String horaFinal,
+            @ModelAttribute("sesion") Sesion sesion,
+            BindingResult result,
+            Model model, SessionStatus sessionStatus) throws PortalException, SystemException {
+        log.debug("Creando la sesion");
+
+        log.debug("Sesion {} {} {} {}", new Object[]{sesion.getDia(), sesion.getSalon().getId(), horaInicial, horaFinal});
+
+        if (sesion.getSalon().getId() != null && sesion.getSalon().getId() > 0) {
+            sesion.setSalon(salonDao.obtiene(sesion.getSalon().getId()));
+        }
+
+        ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+        sdf.setTimeZone(themeDisplay.getTimeZone());
+        try {
+            sesion.setHoraInicial(sdf.parse(horaInicial));
+            sesion.setHoraFinal(sdf.parse(horaFinal));
+        } catch (ParseException ex) {
+            log.error("No se pudo leer la hora inicial y/o la hora final", ex);
+        }
+
+        sesion = salonDao.creaSesion(sesion);
+        sessionStatus.setComplete();
+        response.setRenderParameter("action", "ver");
+        response.setRenderParameter("salonId", salon.getId().toString());
+//        sesionValidator.validate(sesion, result);
+//        if (!result.hasErrors()) {
+//            sesion = salonDao.creaSesion(sesion);
+//            sessionStatus.setComplete();
+//        } else {
+//            log.error("No se pudo guardar el salon");
+//            response.setRenderParameter("action", "nuevaSesionError");
+//        }
+
+    }
+
+    @RequestMapping(params = "action=nuevaSesionError")
+    public String nuevaSesionError(RenderRequest request, Model model) throws SystemException {
+        log.debug("Hubo algun error y regresamos a editar la nueva sesion");
+        return "salon/nuevaSesion";
+    }
+
+    @RequestMapping(params = "action=eliminaSesion")
+    public void eliminaSesion(ActionRequest request, ActionResponse response,
+            @RequestParam Long sesionId,
+            @RequestParam Long salonId,
+            @ModelAttribute("sesion") Sesion sesion,
+            BindingResult result,
+            Model model, SessionStatus sessionStatus) {
+        log.debug("Eliminando sesion {}", sesionId);
+        salonDao.eliminaSesion(sesionId);
+        sessionStatus.setComplete();
+
+        response.setRenderParameter("action", "ver");
+        response.setRenderParameter("salonId", salonId.toString());
     }
 }

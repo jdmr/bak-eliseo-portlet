@@ -25,9 +25,9 @@ public class Sesion implements Serializable {
     private Integer version;
     private Integer dia;
     @Temporal(javax.persistence.TemporalType.TIME)
-    private Date horaInicio;
+    private Date horaInicial;
     @Temporal(javax.persistence.TemporalType.TIME)
-    private Date horaFin;
+    private Date horaFinal;
     @ManyToOne
     private Salon salon;
 
@@ -76,31 +76,31 @@ public class Sesion implements Serializable {
     }
 
     /**
-     * @return the horaInicio
+     * @return the horaInicial
      */
-    public Date getHoraInicio() {
-        return horaInicio;
+    public Date getHoraInicial() {
+        return horaInicial;
     }
 
     /**
-     * @param horaInicio the horaInicio to set
+     * @param horaInicio the horaInicial to set
      */
-    public void setHoraInicio(Date horaInicio) {
-        this.horaInicio = horaInicio;
+    public void setHoraInicial(Date horaInicial) {
+        this.horaInicial = horaInicial;
     }
 
     /**
-     * @return the horaFin
+     * @return the horaFinal
      */
-    public Date getHoraFin() {
-        return horaFin;
+    public Date getHoraFinal() {
+        return horaFinal;
     }
 
     /**
-     * @param horaFin the horaFin to set
+     * @param horaFin the horaFinal to set
      */
-    public void setHoraFin(Date horaFin) {
-        this.horaFin = horaFin;
+    public void setHoraFinal(Date horaFinal) {
+        this.horaFinal = horaFinal;
     }
 
     /**
@@ -141,7 +141,7 @@ public class Sesion implements Serializable {
 
     @Override
     public String toString() {
-        return "Sesion{" + "dia=" + dia + ", horaInicio=" + horaInicio + ", horaFin=" + horaFin + ", salon=" + salon + '}';
+        return "Sesion{" + "dia=" + dia + ", horaInicial=" + horaInicial + ", horaFinal=" + horaFinal + ", salon=" + salon + '}';
     }
     
 }

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.hibernate.Criteria;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Disjunction;
@@ -112,6 +113,25 @@ public class SalonDao {
         criteria.setFirstResult((Integer) params.get("offset"));
         params.put("salones", criteria.list());
         return params;
+    }
+    
+    public Sesion creaSesion(Sesion sesion) {
+        log.info("Creando la sesion {}", sesion);
+        Long id = (Long) hibernateTemplate.save(sesion);
+        sesion.setId(id);
+        return sesion;
+    }
+    
+    public void eliminaSesion(Long id) {
+        log.info("Eliminando la sesion {}", id);
+        hibernateTemplate.delete(hibernateTemplate.load(Sesion.class, id));
+    }
+    
+    public List<Sesion> obtieneSesiones(Salon salon) {
+        Session session = hibernateTemplate.getSessionFactory().openSession();
+        Query query = session.createQuery("select sesion from Sesion sesion where sesion.salon.id = :salonId");
+        query.setParameter("salonId", salon.getId());
+        return query.list();
     }
 
 }

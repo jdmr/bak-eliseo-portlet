@@ -38,7 +38,7 @@ public class Salon implements Serializable {
     @Temporal(javax.persistence.TemporalType.DATE)
     private Date termina;
     @OneToMany(mappedBy="salon")
-    private Set<Sesion> periodos;
+    private Set<Sesion> sesiones;
     
     public Salon() {}
 
@@ -136,12 +136,12 @@ public class Salon implements Serializable {
         this.termina = termina;
     }
 
-    public Set<Sesion> getPeriodos() {
-        return periodos;
+    public Set<Sesion> getSesiones() {
+        return sesiones;
     }
 
-    public void setPeriodos(Set<Sesion> periodos) {
-        this.periodos = periodos;
+    public void setSesiones(Set<Sesion> sesiones) {
+        this.sesiones = sesiones;
     }
 
     @Override

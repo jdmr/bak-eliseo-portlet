@@ -158,6 +158,11 @@
             <artifactId>commons-fileupload</artifactId>
             <version>1.2.1</version>
         </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>1.6</version>
+        </dependency>
     </dependencies>
     <properties>
         <liferay.auto.deploy.dir>/opt/portal/liferay-portal-6.0.5/deploy</liferay.auto.deploy.dir>
