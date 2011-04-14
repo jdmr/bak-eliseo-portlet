@@ -304,3 +304,8 @@
     color: #333;
     padding: 20px;
 }
+.Curso .nav .menuButton a.list {
+    background: url(../images/skin/database_table.png) center left no-repeat;
+    color: #333;
+    padding: 20px;
+}

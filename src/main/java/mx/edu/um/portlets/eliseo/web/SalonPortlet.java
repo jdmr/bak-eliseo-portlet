@@ -29,6 +29,7 @@ import javax.portlet.ActionResponse;
 import javax.portlet.RenderRequest;
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
+import mx.edu.um.portlets.eliseo.dao.AlumnoInscrito;
 import mx.edu.um.portlets.eliseo.dao.Curso;
 import mx.edu.um.portlets.eliseo.dao.CursoDao;
 import mx.edu.um.portlets.eliseo.dao.Salon;
@@ -153,6 +154,8 @@ public class SalonPortlet {
         salonValidator.validate(salon, result);
         if (!result.hasErrors()) {
             salon = salonDao.crea(salon);
+            response.setRenderParameter("action", "ver");
+            response.setRenderParameter("salonId", salon.getId().toString());
             sessionStatus.setComplete();
         } else {
             log.error("No se pudo guardar el salon");
@@ -171,11 +174,11 @@ public class SalonPortlet {
         sdf.setTimeZone(themeDisplay.getTimeZone());
         List<Sesion> sesionesList = salonDao.obtieneSesiones(salon);
         List<SesionVO> sesiones = new ArrayList<SesionVO>();
-        for(Sesion sesionLocal : sesionesList) {
+        for (Sesion sesionLocal : sesionesList) {
             sesiones.add(new SesionVO(sesionLocal, sdf));
         }
         model.addAttribute("sesiones", sesiones);
-        
+
         return "salon/ver";
     }
 
@@ -221,7 +224,9 @@ public class SalonPortlet {
 
         salonValidator.validate(salon, result);
         if (!result.hasErrors()) {
-            salonDao.actualiza(salon);
+            salon = salonDao.actualiza(salon);
+            response.setRenderParameter("action", "ver");
+            response.setRenderParameter("salonId", salon.getId().toString());
             sessionStatus.setComplete();
         } else {
             log.error("No se pudo actualizar el salon");
@@ -402,14 +407,6 @@ public class SalonPortlet {
         sessionStatus.setComplete();
         response.setRenderParameter("action", "ver");
         response.setRenderParameter("salonId", salon.getId().toString());
-//        sesionValidator.validate(sesion, result);
-//        if (!result.hasErrors()) {
-//            sesion = salonDao.creaSesion(sesion);
-//            sessionStatus.setComplete();
-//        } else {
-//            log.error("No se pudo guardar el salon");
-//            response.setRenderParameter("action", "nuevaSesionError");
-//        }
 
     }
 
@@ -433,4 +430,95 @@ public class SalonPortlet {
         response.setRenderParameter("action", "ver");
         response.setRenderParameter("salonId", salonId.toString());
     }
+
+    @RequestMapping(params = "action=alumnos")
+    public String alumnos(RenderRequest request, @RequestParam Long salonId, Model model) {
+        log.debug("Mostrando alumnos de salon {}",salonId);
+        salon = salonDao.obtiene(salonId);
+        
+        List<AlumnoInscrito> alumnos = salonDao.getAlumnos(salon);
+        
+        model.addAttribute("salon",salon);
+        model.addAttribute("alumnos",alumnos);
+        
+        return "salon/alumnos";
+    }
+    
+    @ResourceMapping(value = "buscaAlumno")
+    public void buscaAlumno(@RequestParam("term") String alumnoNombre, ResourceRequest request, ResourceResponse response) throws IOException, SystemException {
+        log.debug("Buscando alumnos que contengan {}", alumnoNombre);
+        JSONArray results = JSONFactoryUtil.createJSONArray();
+
+        ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+        List<User> usuarios = UserLocalServiceUtil.search(themeDisplay.getCompanyId(), alumnoNombre, true, null, QueryUtil.ALL_POS, QueryUtil.ALL_POS, (OrderByComparator) null);
+        for (User usuario : usuarios) {
+            JSONObject listEntry = JSONFactoryUtil.createJSONObject();
+
+            listEntry.put("id", usuario.getPrimaryKey());
+            listEntry.put("value", usuario.getFullName() + " | " + usuario.getScreenName() + " | " + usuario.getEmailAddress());
+            listEntry.put("nombre", usuario.getFullName());
+
+            results.put(listEntry);
+        }
+
+        PrintWriter writer = response.getWriter();
+        writer.println(results.toString());
+    }
+
+    @ResourceMapping(value = "asignaAlumno")
+    public void asignaAlumno(@RequestParam Long alumnoId, 
+                             @RequestParam Long salonId, 
+                             @RequestParam String url,
+                             ResourceRequest request, ResourceResponse response) throws IOException, SystemException, PortalException {
+        log.debug("Asignando alumno {}", alumnoId);
+        ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+        StringBuilder sb = new StringBuilder();
+        User user = UserLocalServiceUtil.getUser(alumnoId);
+        salon = salonDao.obtiene(salonId);
+        salonDao.agregaAlumno(salon, user);
+        List<AlumnoInscrito> alumnos = salonDao.getAlumnos(salon);
+        
+        sb.append("<table><thead><tr>");
+        sb.append("<th>");
+        sb.append(messageSource.getMessage("usuario.nombre", null, themeDisplay.getLocale()));
+        sb.append("</th><th>").append(messageSource.getMessage("usuario.usuario", null, themeDisplay.getLocale())).append("</th>");
+        sb.append("</th><th>").append(messageSource.getMessage("usuario.correo", null, themeDisplay.getLocale())).append("</th>");
+        sb.append("</th><th>").append(messageSource.getMessage("acciones", null, themeDisplay.getLocale())).append("</th>");
+        sb.append("</tr></thead>");
+        sb.append("<tbody>");
+        for(AlumnoInscrito alumno : alumnos) {
+            String nuevaUrl = url + "&_Salones_WAR_eliseoportlet_alumnoId="+alumno.getId();
+            sb.append("<tr><td>");
+            sb.append(alumno.getNombreCompleto());
+            sb.append("</td><td>");
+            sb.append(alumno.getUsuario());
+            sb.append("</td><td>");
+            sb.append(alumno.getCorreo());
+            sb.append("</td><td><a href='").append(nuevaUrl).append("'>");
+            sb.append(messageSource.getMessage("salon.eliminaAlumno", null, themeDisplay.getLocale())).append("</a>");
+            sb.append("</td></tr>");
+        }
+        sb.append("</tbody></table>");
+
+        PrintWriter writer = response.getWriter();
+        writer.println(sb.toString());
+    }
+
+    @RequestMapping(params = "action=eliminaAlumno")
+    public void eliminaAlumno(ActionRequest request, ActionResponse response,
+            @RequestParam Long alumnoId,
+            @ModelAttribute("salon") Salon salon,
+            BindingResult result,
+            Model model, SessionStatus sessionStatus) throws PortalException, SystemException {
+        log.debug("Dando de baja a alumno inscrito {} ", alumnoId);
+
+        Long salonId = salonDao.eliminaAlumno(alumnoId);
+        
+        sessionStatus.setComplete();
+        response.setRenderParameter("action", "alumnos");
+        response.setRenderParameter("salonId", salonId.toString());
+
+    }
+
+    
 }

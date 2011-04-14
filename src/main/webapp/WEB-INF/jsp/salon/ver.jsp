@@ -96,8 +96,13 @@
             <portlet:param name="action" value="nuevaSesion" />
             <portlet:param name="salonId" value="${salon.id}" />
         </portlet:renderURL>
+        <portlet:renderURL var="alumnos" >
+            <portlet:param name="action" value="alumnos" />
+            <portlet:param name="salonId" value="${salon.id}" />
+        </portlet:renderURL>
         <span class="menuButton"><a class="edit" href="${editaSalon}"><liferay-ui:message key="salon.edita" /></a></span>
         <span class="menuButton"><a class="create" href="${nuevaSesion}"><liferay-ui:message key="salon.nuevaSesion" /></a></span>
+        <span class="menuButton"><a class="list" href="${alumnos}"><liferay-ui:message key="salon.alumnos" /></a></span>
         <span class="menuButton"><a class="delete" href="${eliminaSalon}"><liferay-ui:message key="salon.elimina" /></a></span>
         <span class="menuButton"><a class="back" href='<portlet:renderURL portletMode="view"/>'><liferay-ui:message key="salon.regresa" /></a></span>
     </div>

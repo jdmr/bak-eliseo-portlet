@@ -175,6 +175,8 @@ public class CursoPortlet {
         cursoValidator.validate(curso, result);
         if (!result.hasErrors()) {
             curso = cursoDao.crea(curso);
+            response.setRenderParameter("action", "ver");
+            response.setRenderParameter("cursoId", curso.getId().toString());
             sessionStatus.setComplete();
         } else {
             log.error("No se pudo guardar el curso");
@@ -203,6 +205,8 @@ public class CursoPortlet {
         cursoValidator.validate(curso, result);
         if (!result.hasErrors()) {
             cursoDao.actualiza(curso);
+            response.setRenderParameter("action", "ver");
+            response.setRenderParameter("cursoId", curso.getId().toString());
             sessionStatus.setComplete();
         } else {
             log.error("No se pudo actualizar el curso");

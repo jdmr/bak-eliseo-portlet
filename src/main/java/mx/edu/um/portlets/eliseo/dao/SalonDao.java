@@ -1,5 +1,6 @@
 package mx.edu.um.portlets.eliseo.dao;
 
+import com.liferay.portal.model.User;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -133,5 +134,33 @@ public class SalonDao {
         query.setParameter("salonId", salon.getId());
         return query.list();
     }
+    
+    public void agregaAlumno(Salon salon, User alumno) {
+        log.info("Agregando al alumno {} al salon {}", alumno, salon);
+        AlumnoInscrito alumnoInscrito = new AlumnoInscrito(alumno, salon);
+        hibernateTemplate.save(alumnoInscrito);
+    }
+    
+    public List<AlumnoInscrito> getAlumnos(Salon salon) {
+        Session session = hibernateTemplate.getSessionFactory().openSession();
+        Query query = session.createQuery("select alumno from AlumnoInscrito alumno where alumno.salon.id = :salonId");
+        query.setParameter("salonId", salon.getId());
+        return query.list();
+    }
 
+    public void eliminaAlumno(Salon salon, Long alumnoId) {
+        Session session = hibernateTemplate.getSessionFactory().openSession();
+        Query query = session.createQuery("select alumno from AlumnoInscrito alumno where alumno.salon.id = :salonId and alumno.alumnoId = :alumnoId");
+        query.setParameter("salonId", salon.getId());
+        query.setParameter("alumnoId", alumnoId);
+        hibernateTemplate.delete(query.uniqueResult());
+    }
+
+    public Long eliminaAlumno(Long alumnoId) {
+        AlumnoInscrito alumno = hibernateTemplate.get(AlumnoInscrito.class, alumnoId);
+        Long salonId = alumno.getSalon().getId();
+        hibernateTemplate.delete(alumno);
+        return salonId;
+    }
+    
 }

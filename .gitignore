@@ -7,3 +7,4 @@ web-app/WEB-INF/classes
 *.orig
 eliseo-test.log*
 eliseo.log*
+eliseo-portlet.*
