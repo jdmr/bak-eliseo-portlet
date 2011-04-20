@@ -1,6 +1,7 @@
 package mx.edu.um.portlets.eliseo.dao;
 
 import com.liferay.portal.model.User;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -161,6 +162,33 @@ public class SalonDao {
         Long salonId = alumno.getSalon().getId();
         hibernateTemplate.delete(alumno);
         return salonId;
+    }
+
+    public Boolean estaInscrito(Long salonId, Long alumnoId) {
+        boolean resultado = false;
+        Session session = hibernateTemplate.getSessionFactory().openSession();
+        Query query = session.createQuery("select alumno from AlumnoInscrito alumno where alumno.salon.id = :salonId and alumno.alumnoId = :alumnoId");
+        query.setParameter("salonId", salonId);
+        query.setParameter("alumnoId", alumnoId);
+        AlumnoInscrito alumno = (AlumnoInscrito)query.uniqueResult();
+        if (alumno != null) {
+            resultado = true;
+        }
+        return resultado;
+    }
+
+    public Boolean existeSesionActiva(Long salonId, Integer dia, Date hora) {
+        boolean resultado = false;
+        Session session = hibernateTemplate.getSessionFactory().openSession();
+        Query query = session.createQuery("select sesion from Sesion sesion where sesion.salon.id = :salonId and sesion.dia = :dia and sesion.horaInicial <= :hora and sesion.horaFinal >= :hora");
+        query.setParameter("salonId", salonId);
+        query.setParameter("dia", dia);
+        query.setParameter("hora", hora);
+        Sesion sesion = (Sesion) query.uniqueResult();
+        if (sesion != null) {
+            resultado = true;
+        }
+        return resultado;
     }
     
 }

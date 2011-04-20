@@ -141,6 +141,7 @@ public class CursoPortlet {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("max", max);
         params.put("offset", offset);
+        params.put("comunidades",comunidades.keySet());
 
         params = cursoDao.lista(params);
         modelo.addAttribute("cursos", params.get("cursos"));
@@ -225,6 +226,7 @@ public class CursoPortlet {
         log.debug(filtro);
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("filtro", filtro);
+        params.put("comunidades", comunidades.keySet());
         List<Curso> cursos = cursoDao.busca(params);
         if (cursos != null && cursos.size() > 0) {
             modelo.addAttribute("cursos", cursos);

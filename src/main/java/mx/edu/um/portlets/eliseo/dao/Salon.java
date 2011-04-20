@@ -8,9 +8,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -44,6 +41,7 @@ public class Salon implements Serializable {
     private Set<Sesion> sesiones;
     @OneToMany(mappedBy="salon")
     private Set<AlumnoInscrito> alumnos;
+    private String url;
     
     public Salon() {}
 
@@ -147,6 +145,22 @@ public class Salon implements Serializable {
 
     public void setSesiones(Set<Sesion> sesiones) {
         this.sesiones = sesiones;
+    }
+
+    public Set<AlumnoInscrito> getAlumnos() {
+        return alumnos;
+    }
+
+    public void setAlumnos(Set<AlumnoInscrito> alumnos) {
+        this.alumnos = alumnos;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     @Override

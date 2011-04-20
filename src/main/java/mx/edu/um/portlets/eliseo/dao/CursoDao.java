@@ -1,5 +1,6 @@
 package mx.edu.um.portlets.eliseo.dao;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -109,4 +110,40 @@ public class CursoDao {
         params.put("cursos", criteria.list());
         return params;
     }
+
+    public Long cantidadActiva(Set<Long> comunidades, Date hoy) {
+        log.debug("Obteniendo cantidad de cursos activos");
+        log.debug("Params: {} ||| {}",comunidades, hoy);
+        Session session = hibernateTemplate.getSessionFactory().openSession();
+        Criteria criteria = session.createCriteria(Salon.class);
+        criteria.add(Restrictions.le("inicia", hoy));
+        criteria.add(Restrictions.ge("termina", hoy));
+        if (comunidades != null) {
+            criteria.createCriteria("curso").add(Restrictions.in("comunidadId", comunidades));
+        }
+        criteria.setProjection(Projections.rowCount());
+        Long resultado = (Long) criteria.list().get(0);
+        log.debug("El resultado: {}",resultado);
+        return resultado;
+    }
+
+    public Map<String, Object> listaActivos(Map<String, Object> params, Date hoy) {
+        log.debug("Obteniendo lista de cursos activos al dia de {}",hoy);
+        if (params.get("offset") == null) {
+            params.put("offset", new Integer(0));
+        }
+        Session session = hibernateTemplate.getSessionFactory().openSession();
+        Criteria criteria = session.createCriteria(Salon.class);
+        criteria.add(Restrictions.le("inicia", hoy));
+        criteria.add(Restrictions.ge("termina", hoy));
+        if (params != null && params.containsKey("comunidades")) {
+            criteria.createCriteria("curso").add(Restrictions.in("comunidadId", (Set<Long>)params.get("comunidades")));
+        }
+        criteria.setMaxResults((Integer) params.get("max"));
+        criteria.setFirstResult((Integer) params.get("offset"));
+        List<Salon> salones = criteria.list();
+        params.put("salones", salones);
+        return params;
+    }
+    
 }

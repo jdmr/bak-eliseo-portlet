@@ -99,6 +99,16 @@
                         </td>
                     </tr>
 
+                    <tr class="prop">
+                        <td valign="top" class="name">
+                            <label for="<portlet:namespace />url"><liferay-ui:message key="salon.url" /></label>
+                        </td>
+                        <td valign="top" class="value">
+                            <form:input id="<portlet:namespace />url" path="url" maxlength="128"/>
+                            <form:errors cssClass="errors" path="url" cssStyle="color:red;" />
+                        </td>
+                    </tr>
+
                 </tbody>
             </table>
         </div>
@@ -142,8 +152,8 @@
                 return false;
             }
         });
-        $("input#<portlet:namespace />inicia").datepicker();
-        $("input#<portlet:namespace />termina").datepicker();
+        $("input#<portlet:namespace />inicia").datepicker({dateFormat: 'dd/mm/yy'});
+        $("input#<portlet:namespace />termina").datepicker({dateFormat: 'dd/mm/yy'});
     });
 
 </script>

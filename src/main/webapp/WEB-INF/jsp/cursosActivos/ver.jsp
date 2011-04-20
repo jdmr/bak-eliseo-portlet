@@ -43,13 +43,6 @@
                     <td valign="top" class="value">${salon.termina}</td>
                 </tr>
 
-                <tr class="prop">
-                    <td valign="top" class="name">
-                        <liferay-ui:message key="salon.url" />
-                    </td>
-                    <td valign="top" class="value">${salon.url}</td>
-                </tr>
-
             </tbody>
         </table>
         <div class="list">
@@ -62,8 +55,6 @@
                         <th><liferay-ui:message key="sesion.horaInicial" /></th>
 
                         <th><liferay-ui:message key="sesion.horaFinal" /></th>
-
-                        <th><liferay-ui:message key="acciones" /></th>
 
                     </tr>
                 </thead>
@@ -82,8 +73,6 @@
 
                             <td>${sesion.horaFinal}</td>
 
-                            <td><a href="${eliminaSesion}"><liferay-ui:message key="sesion.elimina" /></a></td>
-                            
                         </tr>
                     </c:forEach>
                 </tbody>
@@ -91,26 +80,25 @@
         </div>
     </div>
     <div class="nav">
-        <portlet:renderURL var="editaSalon" >
-            <portlet:param name="action" value="edita" />
-            <portlet:param name="salonId" value="${salon.id}" />
-        </portlet:renderURL>
-        <portlet:actionURL var="eliminaSalon" >
-            <portlet:param name="action" value="elimina" />
-            <portlet:param name="salonId" value="${salon.id}" />
-        </portlet:actionURL>
-        <portlet:renderURL var="nuevaSesion" >
-            <portlet:param name="action" value="nuevaSesion" />
-            <portlet:param name="salonId" value="${salon.id}" />
-        </portlet:renderURL>
-        <portlet:renderURL var="alumnos" >
-            <portlet:param name="action" value="alumnos" />
-            <portlet:param name="salonId" value="${salon.id}" />
-        </portlet:renderURL>
-        <span class="menuButton"><a class="edit" href="${editaSalon}"><liferay-ui:message key="salon.edita" /></a></span>
-        <span class="menuButton"><a class="create" href="${nuevaSesion}"><liferay-ui:message key="salon.nuevaSesion" /></a></span>
-        <span class="menuButton"><a class="list" href="${alumnos}"><liferay-ui:message key="salon.alumnos" /></a></span>
-        <span class="menuButton"><a class="delete" href="${eliminaSalon}"><liferay-ui:message key="salon.elimina" /></a></span>
+        <c:choose>
+            <c:when test="${estaInscrito}">
+                <c:if test="${salonUrl}">
+                    <span class="menuButton"><a class="edit" href="${salonUrl}"><liferay-ui:message key="salon.entrar" /></a></span>
+                </c:if>
+                <portlet:renderURL var="contenidoUrl" >
+                    <portlet:param name="action" value="contenido" />
+                    <portlet:param name="salonId" value="${salon.id}" />
+                </portlet:renderURL>
+                <span class="menuButton"><a class="edit" href="${contenidoUrl}"><liferay-ui:message key="salon.contenido" /></a></span>
+            </c:when>
+            <c:otherwise>
+                <portlet:renderURL var="inscribirseUrl" >
+                    <portlet:param name="action" value="inscribirse" />
+                    <portlet:param name="salonId" value="${salon.id}" />
+                </portlet:renderURL>
+                <span class="menuButton"><a class="edit" href="${inscribirseUrl}"><liferay-ui:message key="salon.registro" /></a></span>
+            </c:otherwise>
+        </c:choose>
         <span class="menuButton"><a class="back" href='<portlet:renderURL portletMode="view"/>'><liferay-ui:message key="salon.regresa" /></a></span>
     </div>
 </div>

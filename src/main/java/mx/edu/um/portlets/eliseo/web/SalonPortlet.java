@@ -69,8 +69,6 @@ public class SalonPortlet {
     @Autowired
     private SalonValidator salonValidator;
     @Autowired
-    private SesionValidator sesionValidator;
-    @Autowired
     private ResourceBundleMessageSource messageSource;
     private Map<Integer, String> dias;
 
@@ -112,6 +110,7 @@ public class SalonPortlet {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("max", max);
         params.put("offset", offset);
+        params.put("comunidades",comunidades.keySet());
 
         params = salonDao.lista(params);
         modelo.addAttribute("salones", params.get("salones"));
