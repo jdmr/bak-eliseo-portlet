@@ -8,4 +8,6 @@ web-app/WEB-INF/classes
 eliseo-test.log*
 eliseo.log*
 eliseo-portlet.*
+es.log*
+es-test.log*
 /.settings/
