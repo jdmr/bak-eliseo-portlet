@@ -304,8 +304,6 @@ public class CursoPortlet {
 
         long[] availableClassNameIds = AssetRendererFactoryRegistryUtil.getClassNameIds();
 
-        boolean anyAssetType = GetterUtil.getBoolean(preferences.getValue("any-asset-type", Boolean.TRUE.toString()));
-
         // Metodo copiado del AssetPublisherUtil
         long[] classNameIds = getClassNameIds(preferences, availableClassNameIds);
 

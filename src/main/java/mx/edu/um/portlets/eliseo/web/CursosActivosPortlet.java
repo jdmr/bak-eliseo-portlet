@@ -10,6 +10,12 @@ import com.liferay.portal.model.User;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portlet.asset.model.AssetEntry;
+import com.liferay.portlet.asset.service.AssetEntryServiceUtil;
+import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
+import com.liferay.portlet.asset.service.persistence.AssetEntryQuery;
+import com.liferay.portlet.journal.model.JournalArticle;
+import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,12 +24,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import javax.portlet.PortletSession;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import mx.edu.um.portlets.eliseo.dao.CursoDao;
 import mx.edu.um.portlets.eliseo.dao.Salon;
 import mx.edu.um.portlets.eliseo.dao.SalonDao;
 import mx.edu.um.portlets.eliseo.dao.Sesion;
+import mx.edu.um.portlets.eliseo.utils.ZonaHorariaUtil;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -48,8 +56,6 @@ public class CursosActivosPortlet {
     @Autowired
     private SalonDao salonDao;
     private Salon salon;
-    /** Cache of old zone IDs to new zone IDs */
-    private static Map<String, String> cZoneIdConversion;
 
     public CursosActivosPortlet() {
         log.info("Nueva instancia del portlet de cursos activos");
@@ -70,7 +76,7 @@ public class CursosActivosPortlet {
             tz = themeDisplay.getTimeZone();
             zone = DateTimeZone.forID(tz.getID());
         } catch (IllegalArgumentException e) {
-            zone = DateTimeZone.forID(CursosActivosPortlet.getConvertedId(tz.getID()));
+            zone = DateTimeZone.forID(ZonaHorariaUtil.getConvertedId(tz.getID()));
         }
         DateTime hoy = new DateTime(zone);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -130,7 +136,7 @@ public class CursosActivosPortlet {
                     tz = themeDisplay.getTimeZone();
                     zone = DateTimeZone.forID(tz.getID());
                 } catch (IllegalArgumentException e) {
-                    zone = DateTimeZone.forID(CursosActivosPortlet.getConvertedId(tz.getID()));
+                    zone = DateTimeZone.forID(ZonaHorariaUtil.getConvertedId(tz.getID()));
                 }
                 DateTime hoy = new DateTime(zone);
 
@@ -156,6 +162,50 @@ public class CursosActivosPortlet {
                 resultado = ver(request, id, model);
             } else {
                 log.debug("Iniciando proceso de inscripcion");
+                TimeZone tz = null;
+                DateTimeZone zone = null;
+                ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+                try {
+                    tz = themeDisplay.getTimeZone();
+                    zone = DateTimeZone.forID(tz.getID());
+                } catch (IllegalArgumentException e) {
+                    zone = DateTimeZone.forID(ZonaHorariaUtil.getConvertedId(tz.getID()));
+                }
+                try {
+                    long scopeGroupId = themeDisplay.getScopeGroupId();
+
+                    AssetEntryQuery assetEntryQuery = new AssetEntryQuery();
+
+                    DateTime hoy = (DateTime) request.getPortletSession().getAttribute("hoy", PortletSession.APPLICATION_SCOPE);
+                    if (hoy == null) {
+                        hoy = new DateTime(zone);
+                        log.debug("Subiendo atributo hoy({}) a la sesion", hoy);
+                        request.getPortletSession().setAttribute("hoy", hoy, PortletSession.APPLICATION_SCOPE);
+                    }
+                    
+                    salon = salonDao.obtiene(id);
+
+                    // Busca el contenido del dia
+                    String[] tags = new String[] {salon.getNombre().toLowerCase(),"inscripcion"};
+
+                    long[] assetTagIds = AssetTagLocalServiceUtil.getTagIds(scopeGroupId, tags);
+
+                    assetEntryQuery.setAllTagIds(assetTagIds);
+
+                    List<AssetEntry> results = AssetEntryServiceUtil.getEntries(assetEntryQuery);
+
+                    for (AssetEntry asset : results) {
+                        if (asset.getClassName().equals(JournalArticle.class.getName())) {
+                            JournalArticle ja = JournalArticleLocalServiceUtil.getLatestArticle(asset.getClassPK());
+                            String contenido = JournalArticleLocalServiceUtil.getArticleContent(ja.getGroupId(), ja.getArticleId(), "view", "" + themeDisplay.getLocale(), themeDisplay);
+                            model.addAttribute("contenido", contenido);
+                        }
+                    }
+
+                } catch (Exception e) {
+                    log.error("No se pudo cargar el contenido", e);
+                    throw new RuntimeException("No se pudo cargar el contenido", e);
+                }
                 resultado = "cursosActivos/inscribirse";
             }
         } else {
@@ -188,45 +238,4 @@ public class CursosActivosPortlet {
         return comunidades;
     }
 
-    private static synchronized String getConvertedId(String id) {
-        Map<String, String> map = cZoneIdConversion;
-        if (map == null) {
-            // Backwards compatibility with TimeZone.
-            map = new HashMap<String, String>();
-            map.put("GMT", "UTC");
-            map.put("MIT", "Pacific/Apia");
-            map.put("HST", "Pacific/Honolulu");
-            map.put("AST", "America/Anchorage");
-            map.put("PST", "America/Los_Angeles");
-            map.put("MST", "America/Denver");
-            map.put("PNT", "America/Phoenix");
-            map.put("CST", "America/Chicago");
-            map.put("EST", "America/New_York");
-            map.put("IET", "America/Indianapolis");
-            map.put("PRT", "America/Puerto_Rico");
-            map.put("CNT", "America/St_Johns");
-            map.put("AGT", "America/Buenos_Aires");
-            map.put("BET", "America/Sao_Paulo");
-            map.put("WET", "Europe/London");
-            map.put("ECT", "Europe/Paris");
-            map.put("ART", "Africa/Cairo");
-            map.put("CAT", "Africa/Harare");
-            map.put("EET", "Europe/Bucharest");
-            map.put("EAT", "Africa/Addis_Ababa");
-            map.put("MET", "Asia/Tehran");
-            map.put("NET", "Asia/Yerevan");
-            map.put("PLT", "Asia/Karachi");
-            map.put("IST", "Asia/Calcutta");
-            map.put("BST", "Asia/Dhaka");
-            map.put("VST", "Asia/Saigon");
-            map.put("CTT", "Asia/Shanghai");
-            map.put("JST", "Asia/Tokyo");
-            map.put("ACT", "Australia/Darwin");
-            map.put("AET", "Australia/Sydney");
-            map.put("SST", "Pacific/Guadalcanal");
-            map.put("NST", "Pacific/Auckland");
-            cZoneIdConversion = map;
-        }
-        return (String) map.get(id);
-    }
 }

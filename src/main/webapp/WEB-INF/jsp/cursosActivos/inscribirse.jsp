@@ -7,6 +7,4 @@
 <%@ page import="com.liferay.portal.kernel.language.LanguageUtil" %>
 <%@ include file="/WEB-INF/jsp/include.jsp" %>
 <link rel="stylesheet" href="<%= request.getContextPath() %>/css/main.css" type="text/css"/>
-<div class="Curso">
-    <p>Hola</p>
-</div>
+<div class="Curso">${contenido}</div>
